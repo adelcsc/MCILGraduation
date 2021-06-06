@@ -209,8 +209,6 @@
     <None Include="res\MCILGraduation.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\..\TRASH\170787217_285207409651934_718024699538705799_n.jpg" />
-    <Image Include="..\..\..\..\..\TRASH\Untitled.png" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\bitmap2.bmp" />
     <Image Include="res\MCILGraduation.ico" />

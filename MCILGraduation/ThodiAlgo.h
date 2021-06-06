@@ -31,7 +31,9 @@ private:
 	struct BitStream
 	{
 		struct AuxilaryInformation aInfo;
+		//TODO : Optimize this 
 		uchar* payload;
+		//TODO: Optimize this
 		uchar* LSBs;
 	};
 
@@ -43,10 +45,14 @@ private:
 
 	bool isChangable(short high, uchar low) { return isInRdRange(2 * (high / 2) | (short)0x0001, low); }
 
-	short ExpandBit(short high, uchar Bit) { return high << 1 | (short)Bit; }
-	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)Bit; }
+	short ExpandBit(short high, uchar Bit) { return high << 1 | (short)(Bit&0x01); }
+	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)(Bit&0x01); }
+
+	
 public:
 	ThodiAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
+	void showOriginal() { imshow("Original", _imagePixels); }
+	void showInjected() { imshow("Injected", _imagePixels); }
 
 	// a function that calculates high pass values using _imagePixels data
 	void CalcHighPass();
@@ -62,5 +68,9 @@ public:
 	void BuildBitStream();
 	
 	void EmbedBitStream();
+
+	void CompileImage();
+
+	void Decode();
 };
 

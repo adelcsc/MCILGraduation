@@ -71,11 +71,5 @@
     <Image Include="res\bitmap2.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\..\TRASH\170787217_285207409651934_718024699538705799_n.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\..\..\..\TRASH\Untitled.png">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

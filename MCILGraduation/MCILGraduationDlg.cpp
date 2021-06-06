@@ -163,11 +163,16 @@ HCURSOR CMCILGraduationDlg::OnQueryDragIcon()
 void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
-	ThodiAlgo algo = ThodiAlgo("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\test.png");
+	ThodiAlgo algo = ThodiAlgo("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
+	algo.showOriginal();
 	algo.CalcHighPass();
 	algo.DetermineLocations();
 	algo.GetDelta();
 	algo.OutterHistogramShift();
+	algo.BuildBitStream();
+	algo.EmbedBitStream();
+	algo.CompileImage();
+	algo.showInjected();
 }
 
 
