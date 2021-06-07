@@ -174,6 +174,10 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	algo.EmbedBitStream();
 	algo.CompileImage();
 	algo.showInjected();
+	ThodiAlgo decode(algo.getPixels().clone());
+	decode.CalcHighPass();
+	decode.GetCLocations();
+	decode.ExtractBitStream();
 }
 
 

@@ -15,13 +15,24 @@ BitArray* ThodiAlgo::GeneratePayload()
 ThodiAlgo::ThodiAlgo(const cv::String& filename, int flags)
 {
 	_imagePixels = imread(filename, IMREAD_GRAYSCALE);
+	Init(_imagePixels);
+}
+
+ThodiAlgo::ThodiAlgo(Mat pixels)
+{
+	_imagePixels = pixels;
+	Init(pixels);
+}
+
+void ThodiAlgo::Init(Mat _imagePixels)
+{
 	if (_imagePixels.data == NULL)
 		MessageBoxA(NULL, (LPCSTR)"This Image is not supported or invalid", (LPCSTR)"Error", MB_OK);
 	else
 	{
 		imageSize = (_imagePixels.cols * _imagePixels.rows / 2);
 		OverFlowMapM = new BitArray(imageSize); //Allocating a buff that's sufficient to hold all bits
-		High= std::vector<short>(imageSize, 0);
+		High = std::vector<short>(imageSize, 0);
 		Low = std::vector<uchar>(imageSize, 0);
 		Payload = GeneratePayload();
 		Locations = std::vector<uchar>(imageSize, 0);//Same here
@@ -35,7 +46,7 @@ void ThodiAlgo::CalcHighPass()
 	for (int i = 0; i < imageSize; i++)
 	{
 		High.at(i)= (short)_imagePixels.data[2 * i] - (short)_imagePixels.data[2 * i + 1];
-		Low.at(i)=((_imagePixels.data[2 * i] + _imagePixels.data[2 * i + 1]) / 2);
+		Low.at(i)=floor(((float)_imagePixels.data[2 * i] + _imagePixels.data[2 * i + 1]) / 2);
 	}
 }
 
@@ -80,7 +91,7 @@ void ThodiAlgo::GetDelta()
 			bits++;
 		}
 		//TODO: Payload Size+Compressed Size
-		if (bits >= sizeof(Header) * 8 + BS.aInfo.header.SizeOfPayload + BS.aInfo.header.SizeOfCompressedOverFlowMap)
+		if (bits >= 72 + BS.aInfo.header.SizeOfPayload + BS.aInfo.header.SizeOfCompressedOverFlowMap)
 			break;
 	}
 	
@@ -126,7 +137,8 @@ void ThodiAlgo::BuildBitStream()
 
 void ThodiAlgo::EmbedBitStream()
 {
-	BitArray headerBits(&BS.aInfo.header),PayloadBits(BS.payload),LSBsBits(BS.LSBs);
+	BitArray headerBits((char*)&BS.aInfo.header,0),PayloadBits((char*)BS.payload,0),LSBsBits((char*)BS.LSBs,0);
+	//char hi = (*NikTizomek)[0];
 	unsigned int bitsEmbedded=0;
 	for (int i = 0; i < Locations.size(); i++)
 	{
@@ -142,6 +154,8 @@ void ThodiAlgo::EmbedBitStream()
 				High.at(i) = ExpandBit(High.at(i), PayloadBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap]);
 			else if (bitsEmbedded >= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
 				High.at(i) = ExpandBit(High.at(i), LSBsBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap - (int)BS.aInfo.header.SizeOfPayload]);
+			else if (bitsEmbedded >= sizeof(int) * 8 + sizeof(char) * 8 && bitsEmbedded < 72)
+				High.at(i) = ExpandBit(High.at(i), headerBits[bitsEmbedded+3*8]);
 			else
 				High.at(i) = ExpandBit(High.at(i), headerBits[bitsEmbedded]);
 			bitsEmbedded++;
@@ -156,6 +170,8 @@ void ThodiAlgo::EmbedBitStream()
 				High.at(i) = ChangeBit(High.at(i), PayloadBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap]);
 			else if (bitsEmbedded >= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
 				High.at(i) = ChangeBit(High.at(i), LSBsBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap - (int)BS.aInfo.header.SizeOfPayload]);
+			else if (bitsEmbedded >= sizeof(int) * 8 + sizeof(char) * 8 && bitsEmbedded < 72)
+				High.at(i) = ChangeBit(High.at(i), headerBits[bitsEmbedded + 3 * 8]);
 			else
 				High.at(i) = ChangeBit(High.at(i), headerBits[bitsEmbedded]);
 			bitsEmbedded++;
@@ -167,7 +183,7 @@ void ThodiAlgo::CompressOverFlowMap()
 {
 	std::string* output = new std::string;
 	snappy::Compress((char*)OverFlowMapM->Data(), OverFlowMapM->sizeInBytes(), output);
-	ComMap = new BitArray((void*)output->data(),output->size()*8);
+	ComMap = new BitArray((char*)output->data(),output->size()*8);
 }
 
 void ThodiAlgo::CompileImage()
@@ -175,20 +191,28 @@ void ThodiAlgo::CompileImage()
 	// Gets new Pixel image based on High and low values
 	for (int i = 0; i < imageSize; i++)
 	{
-		_imagePixels.data[2 * i] = Low.at(i) + (High.at(i) + 1) / 2;
-		_imagePixels.data[2 * i + 1] = Low.at(i) - High.at(i) / 2;
+		_imagePixels.data[2 * i] = Low.at(i) + floor(((float)High.at(i) + 1) / 2);
+		_imagePixels.data[2 * i + 1] = Low.at(i) - floor((float)High.at(i) / 2);
 	}
-}
-
-void ThodiAlgo::Decode()
-{
-	CalcHighPass();
-
 }
 
 void ThodiAlgo::GetCLocations()
 {
+	DetermineLocations(); // an EXPANDABLE value is also CHANGABLE
+}
 
+void ThodiAlgo::ExtractBitStream()
+{
+	BitArray BitStreamBuilder((char*)&BS,0);
+	for (size_t i = sizeof(int)*8+sizeof(char)*8; i < 3 * 8+ sizeof(int) * 8 + sizeof(char) * 8; i++)
+		BitStreamBuilder.reset(i);
+	for (int i = 0; i < Locations.size(); i++)
+	{
+		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
+			if(BitStreamBuilder.currIndex>=sizeof(int)*8+sizeof(char)*8 && BitStreamBuilder.currIndex<64)
+				BitStreamBuilder.currIndex += 3 * 8;
+				BitStreamBuilder.push(High.at(i));
+	}
 }
 
 bool ThodiAlgo::isInRdRange(short val, uchar low)

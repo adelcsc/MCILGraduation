@@ -1,13 +1,14 @@
 #pragma once
 class BitArray
 {
-private:
-	void* bitArray;
+public:
+	
 	unsigned int Size;
 	unsigned int currIndex=0;
+	char* bitArray;
 public:
 	BitArray(int numArray);
-	BitArray(void* input, unsigned int size=0);
+	BitArray(char* input,unsigned int size=0);
 	void set(unsigned int pos);
 
 	void reset(unsigned int pos);

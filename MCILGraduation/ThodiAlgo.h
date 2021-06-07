@@ -55,9 +55,11 @@ private:
 	short ExpandBit(short high, uchar Bit) { return high << 1 | (short)(Bit&0x01); }
 	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)(Bit&0x01); }
 	BitArray* GeneratePayload();
-	
 public:
+	Mat getPixels() { return _imagePixels; }
 	ThodiAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
+	ThodiAlgo(Mat pixels);
+	void Init(Mat pixels);
 	void showOriginal() { imshow("Original", _imagePixels); waitKey(1); }
 	void showInjected() { waitKey(1); imshow("Injected", _imagePixels); waitKey(1); }
 
@@ -82,8 +84,9 @@ public:
 
 
 	// Decoding Functions
-	void Decode();
 
 	void GetCLocations();
+
+	void ExtractBitStream();
 };
 
