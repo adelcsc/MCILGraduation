@@ -1,8 +1,12 @@
 #pragma once
+
+#include <ctime>
+#include <vector>
+#include "BitArray.h"
 #include <opencv2/core/cvstd.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-#include <vector>
+#include <snappy.h>
 using namespace cv;
 class ThodiAlgo
 {
@@ -10,12 +14,15 @@ private:
 	Mat _imagePixels;
 	std::vector<uchar> Low;
 	std::vector<short> High;
-	std::vector<uchar> OverFlowMapM;
+	BitArray* OverFlowMapM;
+	BitArray* ComMap;
 	std::vector<uchar> Locations;
-	std::vector<uchar> LSBs;
-	unsigned int delta;
+	BitArray* LSBs;
+	BitArray* Payload;
+	uchar delta;
+	size_t sizeOfLSBs;
 	enum {NEITHER,EXPANDABLE,CHANGABLE,EXPANDABLE_IN_DELTA};
-	unsigned __int16 imageSize;
+	unsigned __int32 imageSize;
 
 	struct Header {
 		unsigned int SizeOfCompressedOverFlowMap;
@@ -26,15 +33,15 @@ private:
 	{
 		struct Header header;
 		//TODO :Comrpessed OverFlowMap
-		uchar* overflowComp;
+		void* overflowComp;
 	};
 	struct BitStream
 	{
 		struct AuxilaryInformation aInfo;
 		//TODO : Optimize this 
-		uchar* payload;
+		void* payload;
 		//TODO: Optimize this
-		uchar* LSBs;
+		void* LSBs;
 	};
 
 	BitStream BS;
@@ -47,12 +54,12 @@ private:
 
 	short ExpandBit(short high, uchar Bit) { return high << 1 | (short)(Bit&0x01); }
 	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)(Bit&0x01); }
-
+	BitArray* GeneratePayload();
 	
 public:
 	ThodiAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
-	void showOriginal() { imshow("Original", _imagePixels); }
-	void showInjected() { imshow("Injected", _imagePixels); }
+	void showOriginal() { imshow("Original", _imagePixels); waitKey(1); }
+	void showInjected() { waitKey(1); imshow("Injected", _imagePixels); waitKey(1); }
 
 	// a function that calculates high pass values using _imagePixels data
 	void CalcHighPass();
@@ -69,8 +76,14 @@ public:
 	
 	void EmbedBitStream();
 
+	void CompressOverFlowMap();
+
 	void CompileImage();
 
+
+	// Decoding Functions
 	void Decode();
+
+	void GetCLocations();
 };
 

@@ -167,6 +167,7 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	algo.showOriginal();
 	algo.CalcHighPass();
 	algo.DetermineLocations();
+	algo.CompressOverFlowMap();
 	algo.GetDelta();
 	algo.OutterHistogramShift();
 	algo.BuildBitStream();

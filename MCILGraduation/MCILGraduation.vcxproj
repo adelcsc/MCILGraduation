@@ -183,6 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BitArray.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MCILGraduation.h" />
     <ClInclude Include="MCILGraduationDlg.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="ThodiAlgo.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitArray.cpp" />
     <ClCompile Include="MCILGraduation.cpp" />
     <ClCompile Include="MCILGraduationDlg.cpp" />
     <ClCompile Include="pch.cpp">
