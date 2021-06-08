@@ -8,6 +8,7 @@
 #include "MCILGraduationDlg.h"
 #include "afxdialogex.h"
 #include "ThodiAlgo.h"
+#include "BitArray.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -164,7 +165,6 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
 	ThodiAlgo algo = ThodiAlgo("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
-	algo.showOriginal();
 	algo.CalcHighPass();
 	algo.DetermineLocations();
 	algo.CompressOverFlowMap();
@@ -173,11 +173,25 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	algo.BuildBitStream();
 	algo.EmbedBitStream();
 	algo.CompileImage();
-	algo.showInjected();
 	ThodiAlgo decode(algo.getPixels().clone());
+	decode.showOriginal();
 	decode.CalcHighPass();
 	decode.GetCLocations();
 	decode.ExtractBitStream();
+	decode.DecompressOverFlowMap();
+	decode.IdentifyExpandedLocations();
+	decode.CompareBitStreams(algo.BS);
+
+	//TODO: Something Wrong here
+	decode.RestoreLSBs();
+	decode.RestoreExpanded();
+	decode.ReverseShift();
+
+	decode.CompareHigh(algo.oHigh);
+	decode.CompileImage();
+	decode.isEqualTo(algo._OriginalPixels);
+	//Comparision
+	
 }
 
 

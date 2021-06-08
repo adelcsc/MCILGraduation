@@ -13,9 +13,9 @@ class ThodiAlgo
 private:
 	Mat _imagePixels;
 	std::vector<uchar> Low;
-	std::vector<short> High;
+	
 	BitArray* OverFlowMapM;
-	BitArray* ComMap;
+	
 	std::vector<uchar> Locations;
 	BitArray* LSBs;
 	BitArray* Payload;
@@ -44,7 +44,6 @@ private:
 		void* LSBs;
 	};
 
-	BitStream BS;
 	// a function that checks if value is in RD Range
 	bool isInRdRange(short val, uchar low);
 
@@ -56,6 +55,11 @@ private:
 	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)(Bit&0x01); }
 	BitArray* GeneratePayload();
 public:
+	std::vector<short> High;
+	Mat _OriginalPixels;
+	std::vector<short> oHigh;
+	BitStream BS;
+	BitArray* ComMap;
 	Mat getPixels() { return _imagePixels; }
 	ThodiAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
 	ThodiAlgo(Mat pixels);
@@ -88,5 +92,20 @@ public:
 	void GetCLocations();
 
 	void ExtractBitStream();
+
+	void DecompressOverFlowMap();
+
+	void IdentifyExpandedLocations();
+
+	void RestoreLSBs();
+
+	void ReverseShift();
+
+	void RestoreExpanded();
+	// Statistics functions
+
+	bool isEqualTo(Mat imagePixels);
+	bool CompareBitStreams(BitStream inBS);
+	bool CompareHigh(std::vector<short> tHigh);
 };
 

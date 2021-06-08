@@ -31,8 +31,22 @@ void BitArray::push(char Bit)
         reset(currIndex++);
 }
 
+char BitArray::next()
+{
+    return (*this)[nextIndex++];
+}
+
 char BitArray::operator[](unsigned int i)
 {
     // TODO: insert return statement here
-    return *(char*)(bitArray + i / 8) >> (7 - i % 8);
+    return (*(unsigned char*)(bitArray + i / 8) >> (7 - i % 8))&0x01;
+}
+
+bool BitArray::operator==(BitArray& obj)
+{
+
+    for (int i = 0; i < Size; i++)
+        if ((*this)[i] != obj[i])
+            return false;
+    return true;
 }

@@ -15,12 +15,14 @@ BitArray* ThodiAlgo::GeneratePayload()
 ThodiAlgo::ThodiAlgo(const cv::String& filename, int flags)
 {
 	_imagePixels = imread(filename, IMREAD_GRAYSCALE);
+	_OriginalPixels = _imagePixels.clone();
 	Init(_imagePixels);
 }
 
 ThodiAlgo::ThodiAlgo(Mat pixels)
 {
 	_imagePixels = pixels;
+	_OriginalPixels = _imagePixels.clone();
 	Init(pixels);
 }
 
@@ -48,13 +50,14 @@ void ThodiAlgo::CalcHighPass()
 		High.at(i)= (short)_imagePixels.data[2 * i] - (short)_imagePixels.data[2 * i + 1];
 		Low.at(i)=floor(((float)_imagePixels.data[2 * i] + _imagePixels.data[2 * i + 1]) / 2);
 	}
+	oHigh = High;
 }
 
 
 void ThodiAlgo::DetermineLocations()
 {
 	sizeOfLSBs = 0;
-	for (int i = 0; i < imageSize; i++)
+	for (int i = 0; i < Locations.size(); i++)
 	{
 		// Checking if Hw is in Rd range
 		if (isExpandable(High.at(i), Low.at(i)))
@@ -77,9 +80,10 @@ void ThodiAlgo::DetermineLocations()
 
 void ThodiAlgo::GetDelta()
 {
-	unsigned int bits = 0;
+	unsigned int bits;
 	for (delta = 0; delta < 256; delta++)
 	{
+		bits = 0;
 		for (int i = 0; i < High.size(); i++)
 		{
 			if (!(High.at(i) >= -(int)delta-1 && High.at(i) <= delta))
@@ -117,7 +121,6 @@ void ThodiAlgo::BuildBitStream()
 	BS.aInfo.header.SizeOfPayload = Payload->size();
 	BS.aInfo.overflowComp = ComMap->Data();
 	BS.payload = Payload->Data();
-	
 	LSBs = new BitArray(sizeOfLSBs);
 	if (BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload + sizeOfLSBs + 72 > High.size())
 	{
@@ -138,20 +141,20 @@ void ThodiAlgo::BuildBitStream()
 void ThodiAlgo::EmbedBitStream()
 {
 	BitArray headerBits((char*)&BS.aInfo.header,0),PayloadBits((char*)BS.payload,0),LSBsBits((char*)BS.LSBs,0);
-	//char hi = (*NikTizomek)[0];
 	unsigned int bitsEmbedded=0;
 	for (int i = 0; i < Locations.size(); i++)
 	{
 		
 		if (Locations.at(i) == EXPANDABLE_IN_DELTA)
 		{
-			if (bitsEmbedded >= 72 && bitsEmbedded < 72 +
-				BS.aInfo.header.SizeOfCompressedOverFlowMap)
+			if (bitsEmbedded >= 72 && bitsEmbedded < 72 +BS.aInfo.header.SizeOfCompressedOverFlowMap)
 				High.at(i) = ExpandBit(High.at(i), (*ComMap)[bitsEmbedded - 72]);
-			else if (bitsEmbedded >=
-				72 + BS.aInfo.header.SizeOfCompressedOverFlowMap &&
+
+			else if (bitsEmbedded >=72 + BS.aInfo.header.SizeOfCompressedOverFlowMap &&
 				bitsEmbedded < 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
+
 				High.at(i) = ExpandBit(High.at(i), PayloadBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap]);
+
 			else if (bitsEmbedded >= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
 				High.at(i) = ExpandBit(High.at(i), LSBsBits[bitsEmbedded - 72 - (int)BS.aInfo.header.SizeOfCompressedOverFlowMap - (int)BS.aInfo.header.SizeOfPayload]);
 			else if (bitsEmbedded >= sizeof(int) * 8 + sizeof(char) * 8 && bitsEmbedded < 72)
@@ -188,6 +191,7 @@ void ThodiAlgo::CompressOverFlowMap()
 
 void ThodiAlgo::CompileImage()
 {
+	
 	// Gets new Pixel image based on High and low values
 	for (int i = 0; i < imageSize; i++)
 	{
@@ -223,41 +227,138 @@ void ThodiAlgo::ExtractBitStream()
 			BitStreamBuilder.push(High.at(i));
 		}	
 	}
-	BS.aInfo.overflowComp = new BitArray(BS.aInfo.header.SizeOfCompressedOverFlowMap);
+	BitArray* ComMap = new BitArray(BS.aInfo.header.SizeOfCompressedOverFlowMap);
+	BS.aInfo.overflowComp = ComMap->bitArray;
 
 	//Extract Compressed Map
 	for (; i < Locations.size(); i++)
 	{
 		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
 		{
-			if ((*(BitArray*)BS.aInfo.overflowComp).currIndex >= BS.aInfo.header.SizeOfCompressedOverFlowMap)
+			if (ComMap->currIndex >= BS.aInfo.header.SizeOfCompressedOverFlowMap)
 				break;
-			(*(BitArray*)BS.aInfo.overflowComp).push(High.at(i));
+			ComMap->push(High.at(i));
 		}
 	}
-
-	BS.payload = new BitArray(BS.aInfo.header.SizeOfPayload);
 	// Extract Payload
+	BitArray *payload = new BitArray(BS.aInfo.header.SizeOfPayload);
+	BS.payload = payload->bitArray;
 	for (; i < Locations.size(); i++)
 	{
 		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
 		{
-			if ((*(BitArray*)BS.payload).currIndex >= BS.aInfo.header.SizeOfPayload)
+			if (payload->currIndex >= BS.aInfo.header.SizeOfPayload)
 				break;
-			(*(BitArray*)BS.payload).push(High.at(i));
+			payload->push(High.at(i));
 		}
 	}
-
-	BS.LSBs = new BitArray(Locations.size() - (72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload));
-
+	BitArray *LSBs = new BitArray(Locations.size()); //TODO: the size is maxmimum
+	BS.LSBs = LSBs->bitArray;
 	//Extract LSBs
 	for (; i < Locations.size(); i++)
 	{
 		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
 		{
-			(*(BitArray*)BS.LSBs).push(High.at(i));
+			LSBs->push(High.at(i));
 		}
 	}
+}
+
+void ThodiAlgo::DecompressOverFlowMap()
+{
+	std::string *decompressed = new std::string();
+	snappy::Uncompress((char*)BS.aInfo.overflowComp, BS.aInfo.header.SizeOfCompressedOverFlowMap/8, decompressed);
+	OverFlowMapM = new BitArray((char*)decompressed->data(), Locations.size());
+}
+
+void ThodiAlgo::IdentifyExpandedLocations()
+{
+	// Mark E locations
+	for (int i = 0; i < Locations.size(); i++)
+		if ((*OverFlowMapM)[i])
+			Locations.at(i) = EXPANDABLE;
+
+	// Get Ee Locations
+	for (int i = 0; i < Locations.size(); i++)
+		if (Locations.at(i) == EXPANDABLE)
+			if (High.at(i) >= -2 * (short)BS.aInfo.header.Delta - 2 && High.at(i) <= 2 * BS.aInfo.header.Delta + 1)
+			{
+				Locations.at(i) = EXPANDABLE_IN_DELTA;
+				sizeOfLSBs--;
+			}
+	
+}
+
+void ThodiAlgo::RestoreLSBs()
+{
+	BitArray LSBs = BitArray((char*)BS.LSBs, 0);
+	LSBs.resetNext();
+	for (int i = 0; i < Locations.size(); i++)
+		if (Locations.at(i) == CHANGABLE || Locations.at(i) == EXPANDABLE)
+			if (LSBs.next()&0x01)
+				High.at(i) |= 0x0001;
+			else
+				High.at(i) &= 0x0;
+}
+
+void ThodiAlgo::ReverseShift()
+{
+	for (int i = 0; i < Locations.size(); i++)
+		if (Locations.at(i) == EXPANDABLE)
+			if (High.at(i) > 2 * (short)BS.aInfo.header.Delta + 1)
+				High.at(i) += -(short)BS.aInfo.header.Delta - 1;
+			else if (High.at(i) < -2 * (short)BS.aInfo.header.Delta - 2)
+				High.at(i) += BS.aInfo.header.Delta + 1;
+}
+
+void ThodiAlgo::RestoreExpanded()
+{
+	for (int i = 0; i < Locations.size(); i++)
+	{
+		if (Locations.at(i) == EXPANDABLE_IN_DELTA)
+			High.at(i) >>= 1;
+	}
+}
+
+bool ThodiAlgo::isEqualTo(Mat imagePixels)
+{
+	for(int i = 0;i<imageSize;i++)
+		if(_imagePixels.data[i]!=imagePixels.data[i])
+			return false;
+	return true;
+}
+
+bool ThodiAlgo::CompareBitStreams(BitStream inBS)
+{
+	//Comparing Header
+	BitArray aHeader((char*)&inBS, sizeof(Header)*8), bHeader((char*)&BS,sizeof(Header)*8);
+	if (!(aHeader == bHeader))
+		return false;
+
+	//Comparing Compressed OverFlowMap
+	BitArray aOverFlowMap((char*)inBS.aInfo.overflowComp, inBS.aInfo.header.SizeOfCompressedOverFlowMap), bOverFlowMap((char*)BS.aInfo.overflowComp, BS.aInfo.header.SizeOfCompressedOverFlowMap);
+	if (!(aOverFlowMap == bOverFlowMap))
+		return false;
+
+	//Compare Payload
+	BitArray aPayload((char*)inBS.payload, inBS.aInfo.header.SizeOfPayload), bPayload((char*)BS.payload, BS.aInfo.header.SizeOfPayload);
+	if (!(aPayload == bPayload))
+		return false;
+
+	//Compare LSBs
+	BitArray aLSBs((char*)inBS.LSBs, sizeOfLSBs), bLSBs((char*)BS.LSBs,sizeOfLSBs);
+	if (!(aLSBs == bLSBs))
+		return false;
+
+	return true;
+}
+
+bool ThodiAlgo::CompareHigh(std::vector<short> tHigh)
+{
+	for (int i = 0; i < High.size(); i++)
+		if (High.at(i) != tHigh.at(i))
+			return false;
+	return true;
 }
 
 bool ThodiAlgo::isInRdRange(short val, uchar low)

@@ -5,6 +5,7 @@ public:
 	
 	unsigned int Size;
 	unsigned int currIndex=0;
+	unsigned int nextIndex=0;
 	char* bitArray;
 public:
 	BitArray(int numArray);
@@ -13,7 +14,11 @@ public:
 
 	void reset(unsigned int pos);
 	void push(char Bit);
+	char next();
+	void resetNext() { nextIndex = 0; }
+	void resetGet() { currIndex = 0; }
 	char operator[](unsigned int i);
+	bool operator== (BitArray& obj);
 	void* Data() { return bitArray; }
 	unsigned int size() { return Size; }
 	unsigned int sizeInBytes() { 
