@@ -204,14 +204,59 @@ void ThodiAlgo::GetCLocations()
 void ThodiAlgo::ExtractBitStream()
 {
 	BitArray BitStreamBuilder((char*)&BS,0);
+
+	//Fill the empty Space between char and int of the header variables which is 3*8
+
 	for (size_t i = sizeof(int)*8+sizeof(char)*8; i < 3 * 8+ sizeof(int) * 8 + sizeof(char) * 8; i++)
 		BitStreamBuilder.reset(i);
-	for (int i = 0; i < Locations.size(); i++)
+
+	//Extract Header
+	int i = 0;
+	for (i = 0; i < Locations.size(); i++)
 	{
 		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
-			if(BitStreamBuilder.currIndex>=sizeof(int)*8+sizeof(char)*8 && BitStreamBuilder.currIndex<64)
+		{
+			if (BitStreamBuilder.currIndex >= sizeof(int) * 8 + sizeof(char) * 8 && BitStreamBuilder.currIndex < 64)
 				BitStreamBuilder.currIndex += 3 * 8;
-				BitStreamBuilder.push(High.at(i));
+			if (BitStreamBuilder.currIndex >= sizeof(Header) * 8)
+				break;
+			BitStreamBuilder.push(High.at(i));
+		}	
+	}
+	BS.aInfo.overflowComp = new BitArray(BS.aInfo.header.SizeOfCompressedOverFlowMap);
+
+	//Extract Compressed Map
+	for (; i < Locations.size(); i++)
+	{
+		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
+		{
+			if ((*(BitArray*)BS.aInfo.overflowComp).currIndex >= BS.aInfo.header.SizeOfCompressedOverFlowMap)
+				break;
+			(*(BitArray*)BS.aInfo.overflowComp).push(High.at(i));
+		}
+	}
+
+	BS.payload = new BitArray(BS.aInfo.header.SizeOfPayload);
+	// Extract Payload
+	for (; i < Locations.size(); i++)
+	{
+		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
+		{
+			if ((*(BitArray*)BS.payload).currIndex >= BS.aInfo.header.SizeOfPayload)
+				break;
+			(*(BitArray*)BS.payload).push(High.at(i));
+		}
+	}
+
+	BS.LSBs = new BitArray(Locations.size() - (72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload));
+
+	//Extract LSBs
+	for (; i < Locations.size(); i++)
+	{
+		if (Locations.at(i) == EXPANDABLE || Locations.at(i) == CHANGABLE)
+		{
+			(*(BitArray*)BS.LSBs).push(High.at(i));
+		}
 	}
 }
 
