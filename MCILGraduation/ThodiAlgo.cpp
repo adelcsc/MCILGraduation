@@ -138,7 +138,6 @@ void ThodiAlgo::BuildBitStream()
 void ThodiAlgo::EmbedBitStream()
 {
 	BitArray headerBits((char*)&BS.aInfo.header,0),PayloadBits((char*)BS.payload,0),LSBsBits((char*)BS.LSBs,0);
-	//char hi = (*NikTizomek)[0];
 	unsigned int bitsEmbedded=0;
 	for (int i = 0; i < Locations.size(); i++)
 	{
