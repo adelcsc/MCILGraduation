@@ -202,7 +202,17 @@ void ThodiAlgo::CompileImage()
 
 void ThodiAlgo::GetCLocations()
 {
-	DetermineLocations(); // an EXPANDABLE value is also CHANGABLE
+	sizeOfLSBs = 0;
+	for (int i = 0; i < Locations.size(); i++)
+	{
+		if (isChangable(High.at(i), Low.at(i)))
+		{
+			Locations.at(i) = CHANGABLE;
+			sizeOfLSBs++;
+		}
+		else
+			Locations.at(i) = NEITHER;
+	}
 }
 
 void ThodiAlgo::ExtractBitStream()
@@ -298,7 +308,7 @@ void ThodiAlgo::RestoreLSBs()
 			if (LSBs.next()&0x01)
 				High.at(i) |= 0x0001;
 			else
-				High.at(i) &= 0x0;
+				High.at(i) &= ~0x0001;
 }
 
 void ThodiAlgo::ReverseShift()
