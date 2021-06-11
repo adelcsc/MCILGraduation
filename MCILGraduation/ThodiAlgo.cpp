@@ -1,28 +1,14 @@
 #include "pch.h"
 #include "ThodiAlgo.h"
 #include <algorithm>
-BitArray* ThodiAlgo::GeneratePayload()
+
+ThodiAlgo::ThodiAlgo(const cv::String& filename, int flags) : EEAlgo(filename)
 {
-	std::srand(std::time(nullptr));
-	BitArray* payload = new BitArray(((float)std::rand() / RAND_MAX) * 10000);
-	for (int i = 0; i < payload->size(); i++)
-		if ((float)std::rand() / RAND_MAX < 0.5)
-			payload->set(i);
-		else
-			payload->reset(i);
-	return payload;
-}
-ThodiAlgo::ThodiAlgo(const cv::String& filename, int flags)
-{
-	_imagePixels = imread(filename, IMREAD_GRAYSCALE);
-	_OriginalPixels = _imagePixels.clone();
 	Init(_imagePixels);
 }
 
-ThodiAlgo::ThodiAlgo(Mat pixels)
+ThodiAlgo::ThodiAlgo(Mat pixels) : EEAlgo(pixels)
 {
-	_imagePixels = pixels;
-	_OriginalPixels = _imagePixels.clone();
 	Init(pixels);
 }
 
@@ -60,14 +46,14 @@ void ThodiAlgo::DetermineLocations()
 	for (int i = 0; i < Locations.size(); i++)
 	{
 		// Checking if Hw is in Rd range
-		if (isExpandable(High.at(i), Low.at(i)))
+		if (isExpandable(High.at(i), Low.at(i), &isInRdRange))
 		{
 			Locations.at(i) = EXPANDABLE;
 			OverFlowMapM->set(i);
 			sizeOfLSBs++;
 			continue;
 		}
-		else if (isChangable(High.at(i), Low.at(i)))
+		else if (isChangable(High.at(i), Low.at(i), &isInRdRange))
 		{
 			Locations.at(i) = CHANGABLE;
 			sizeOfLSBs++;
@@ -205,7 +191,7 @@ void ThodiAlgo::GetCLocations()
 	sizeOfLSBs = 0;
 	for (int i = 0; i < Locations.size(); i++)
 	{
-		if (isChangable(High.at(i), Low.at(i)))
+		if (isChangable(High.at(i), Low.at(i), &isInRdRange))
 		{
 			Locations.at(i) = CHANGABLE;
 			sizeOfLSBs++;

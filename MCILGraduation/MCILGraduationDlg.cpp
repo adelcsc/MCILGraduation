@@ -7,8 +7,9 @@
 #include "MCILGraduation.h"
 #include "MCILGraduationDlg.h"
 #include "afxdialogex.h"
-#include "ThodiAlgo.h"
+#include "PEAlgo.h"
 #include "BitArray.h"
+#include <commdlg.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -70,6 +71,7 @@ BEGIN_MESSAGE_MAP(CMCILGraduationDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON1, &CMCILGraduationDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMCILGraduationDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -160,38 +162,11 @@ HCURSOR CMCILGraduationDlg::OnQueryDragIcon()
 }
 
 
-
+CString* fileName;
 void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
-	ThodiAlgo algo = ThodiAlgo("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
-	algo.CalcHighPass();
-	algo.DetermineLocations();
-	algo.CompressOverFlowMap();
-	algo.GetDelta();
-	algo.OutterHistogramShift();
-	algo.BuildBitStream();
-	algo.EmbedBitStream();
-	algo.CompileImage();
-	ThodiAlgo decode(algo.getPixels().clone());
-	decode.showOriginal();
-	decode.CalcHighPass();
-	decode.GetCLocations();
-	decode.ExtractBitStream();
-	decode.DecompressOverFlowMap();
-	decode.IdentifyExpandedLocations();
-	decode.CompareBitStreams(algo.BS);
-
-	//TODO: Something Wrong here
-	decode.RestoreLSBs();
-	decode.RestoreExpanded();
-	decode.ReverseShift();
-
-	decode.CompareHigh(algo.oHigh);
-	decode.CompileImage();
-	decode.isEqualTo(algo._OriginalPixels);
-	//Comparision
-	
+	PEAlgo encode("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
 }
 
 
@@ -199,4 +174,15 @@ void CAboutDlg::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
 	CDialogEx::OnOK();
+}
+
+
+void CMCILGraduationDlg::OnBnClickedButton2()
+{
+	CFileDialog* dlg= new CFileDialog(TRUE);
+	if (dlg->DoModal() == IDOK)
+	{
+		fileName=&dlg->GetPathName();
+		
+	}
 }

@@ -39,6 +39,12 @@
     <ClInclude Include="BitArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PEAlgo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EEAlgo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MCILGraduation.cpp">
@@ -54,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BitArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PEAlgo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EEAlgo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,6 +87,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\bitmap2.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\..\..\TRASH\Untitled.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
