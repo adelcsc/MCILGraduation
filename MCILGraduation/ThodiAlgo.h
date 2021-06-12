@@ -7,9 +7,6 @@ class ThodiAlgo : public EEAlgo
 private:
 	std::vector<uchar> Low;
 	std::vector<uchar> Locations;
-	BitArray* LSBs;
-	uchar delta;
-	size_t sizeOfLSBs;
 	unsigned __int32 imageSize;
 	// a function that checks if value is in RD Range
 	static bool isInRdRange(short val, uchar low);

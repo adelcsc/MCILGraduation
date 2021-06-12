@@ -15,6 +15,9 @@ protected:
 	BitArray* OverFlowMapM;
 	BitArray* Payload;
 	BitArray* ComMap;
+	BitArray* LSBs;
+	uchar delta;
+	size_t sizeOfLSBs;
 	enum { NEITHER, EXPANDABLE, CHANGABLE, EXPANDABLE_IN_DELTA };
 	short ExpandBit(short high, uchar Bit) { return high << 1 | (short)(Bit & 0x01); }
 	short ChangeBit(short high, uchar Bit) { return (high >> 1) << 1 | (short)(Bit & 0x01); }

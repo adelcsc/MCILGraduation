@@ -18,7 +18,7 @@ void ThodiAlgo::Init(Mat _imagePixels)
 		MessageBoxA(NULL, (LPCSTR)"This Image is not supported or invalid", (LPCSTR)"Error", MB_OK);
 	else
 	{
-		imageSize = (_imagePixels.cols * _imagePixels.rows / 2);
+		imageSize = (_imagePixels.cols * _imagePixels.rows) / 2;
 		OverFlowMapM = new BitArray(imageSize); //Allocating a buff that's sufficient to hold all bits
 		High = std::vector<short>(imageSize, 0);
 		Low = std::vector<uchar>(imageSize, 0);

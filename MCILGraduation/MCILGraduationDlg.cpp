@@ -167,6 +167,20 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
 	PEAlgo encode("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
+	encode.showOriginal();
+	encode.CalcPE();
+	encode.GetLocations();
+	encode.CompressOverFlowMap();
+	encode.GetDelta();
+	encode.OutterHistogramShift();
+	encode.BuildBitStream();
+	encode.EmbedBitStream();
+	encode.CompileImage();
+	encode.showInjected();
+	PEAlgo decode(encode.getPixels().clone());
+	decode.CalcPE();
+	decode.GetCLocations();
+	decode.ExtractBitStream();
 }
 
 
