@@ -203,7 +203,7 @@ void PEAlgo::CompileImage()
 	// Gets new Pixel image based on High and low values
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for(int j =0;j<_imagePixels.cols;j++)
-			_imagePixels.at<uchar>(i, j) = PredictedVal.at<uchar>(i,j) + floor((float)PredictedErrors.at<short>(i,j) / 2);
+			_imagePixels.at<uchar>(i, j) = PredictedVal.at<uchar>(i,j) + PredictedErrors.at<short>(i,j);
 }
 
 void PEAlgo::GetCLocations()
