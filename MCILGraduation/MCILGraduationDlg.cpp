@@ -183,6 +183,7 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	decode.ExtractBitStream();
 	decode.DecompressOverFlowMap();
 	decode.IdentifyExpandedLocations();
+	//Locations here aren't the same !
 	decode.CompareLocations(encode.Locations);
  	decode.CompareBitStreams(encode.GetBitStream());
 	
