@@ -44,7 +44,6 @@ char BitArray::operator[](unsigned int i)
 
 bool BitArray::operator==(BitArray& obj)
 {
-
     for (int i = 0; i < Size; i++)
         if ((*this)[i] != obj[i])
             return false;

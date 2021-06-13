@@ -316,39 +316,6 @@ void ThodiAlgo::RestoreExpanded()
 	}
 }
 
-bool ThodiAlgo::isEqualTo(Mat imagePixels)
-{
-	for(int i = 0;i<imageSize;i++)
-		if(_imagePixels.data[i]!=imagePixels.data[i])
-			return false;
-	return true;
-}
-
-bool ThodiAlgo::CompareBitStreams(BitStream inBS)
-{
-	//Comparing Header
-	BitArray aHeader((char*)&inBS, sizeof(Header)*8), bHeader((char*)&BS,sizeof(Header)*8);
-	if (!(aHeader == bHeader))
-		return false;
-
-	//Comparing Compressed OverFlowMap
-	BitArray aOverFlowMap((char*)inBS.aInfo.overflowComp, inBS.aInfo.header.SizeOfCompressedOverFlowMap), bOverFlowMap((char*)BS.aInfo.overflowComp, BS.aInfo.header.SizeOfCompressedOverFlowMap);
-	if (!(aOverFlowMap == bOverFlowMap))
-		return false;
-
-	//Compare Payload
-	BitArray aPayload((char*)inBS.payload, inBS.aInfo.header.SizeOfPayload), bPayload((char*)BS.payload, BS.aInfo.header.SizeOfPayload);
-	if (!(aPayload == bPayload))
-		return false;
-
-	//Compare LSBs
-	BitArray aLSBs((char*)inBS.LSBs, sizeOfLSBs), bLSBs((char*)BS.LSBs,sizeOfLSBs);
-	if (!(aLSBs == bLSBs))
-		return false;
-
-	return true;
-}
-
 bool ThodiAlgo::CompareHigh(std::vector<short> tHigh)
 {
 	for (int i = 0; i < High.size(); i++)

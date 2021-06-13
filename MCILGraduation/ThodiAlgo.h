@@ -55,8 +55,6 @@ public:
 	void RestoreExpanded();
 	// Statistics functions
 
-	bool isEqualTo(Mat imagePixels);
-	bool CompareBitStreams(BitStream inBS);
 	bool CompareHigh(std::vector<short> tHigh);
 };
 

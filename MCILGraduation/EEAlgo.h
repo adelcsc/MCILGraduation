@@ -46,10 +46,14 @@ protected:
 	BitStream BS;
 
 public:
+	BitStream GetBitStream() { return BS; }
+
 	void showOriginal() { imshow("Original", _OriginalPixels); waitKey(1); }
 	void showInjected() { waitKey(1); imshow("Injected", _imagePixels); waitKey(1); }
 	void showRestored() { imshow("Restored", _imagePixels); waitKey(1); }
 	Mat getPixels() { return _imagePixels; }
+	bool isEqualTo(Mat imagePixels);
+	bool CompareBitStreams(BitStream inBS);
 	EEAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
 	EEAlgo(Mat pixels);
 };
