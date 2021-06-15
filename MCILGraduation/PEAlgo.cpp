@@ -244,14 +244,11 @@ void PEAlgo::ExtractBitStream()
 	int i = 0;
 	for (i=0; i < _imagePixels.cols * _imagePixels.rows; i++)
 	{
-		if (Locations.at(i) == CHANGABLE)
-		{
-			if (BitStreamBuilder.currIndex >= sizeof(int) * 8 + sizeof(char) * 8 && BitStreamBuilder.currIndex < 64)
-				BitStreamBuilder.currIndex += 3 * 8;
-			if (BitStreamBuilder.currIndex >= sizeof(Header) * 8)
-				goto ExtractCompressedMap;
-			BitStreamBuilder.push(_imagePixels.at<uchar>(i/_imagePixels.cols, i%_imagePixels.cols));
-		}
+		if (BitStreamBuilder.currIndex >= sizeof(int) * 8 + sizeof(char) * 8 && BitStreamBuilder.currIndex < 64)
+			BitStreamBuilder.currIndex += 3 * 8;
+		if (BitStreamBuilder.currIndex >= sizeof(Header) * 8)
+			goto ExtractCompressedMap;
+		BitStreamBuilder.push(_imagePixels.at<uchar>(i/_imagePixels.cols, i%_imagePixels.cols));
 	}
 	//Extract Compressed Map
 	ExtractCompressedMap:
@@ -259,12 +256,9 @@ void PEAlgo::ExtractBitStream()
 	BS.aInfo.overflowComp = ComMap->bitArray;
 	for (; i < _imagePixels.cols*_imagePixels.rows; i++)
 	{
-		if (Locations.at(i) == CHANGABLE)
-		{
-			if (ComMap->currIndex >= BS.aInfo.header.SizeOfCompressedOverFlowMap)
-				goto ExtractPayload;
-			ComMap->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
-		}
+		if (ComMap->currIndex >= BS.aInfo.header.SizeOfCompressedOverFlowMap)
+			goto ExtractPayload;
+		ComMap->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
 	}
 	// Extract Payload
 	ExtractPayload:
@@ -284,8 +278,7 @@ void PEAlgo::ExtractBitStream()
 	BitArray* LSBs = new BitArray(Locations.size()); //TODO: the size is maxmimum
 	BS.LSBs = LSBs->bitArray;
 	for (; i < _imagePixels.cols * _imagePixels.rows; i++)
-		if (Locations.at(i) == CHANGABLE)
-			LSBs->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
+		LSBs->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
 }
 
 void PEAlgo::DecompressOverFlowMap()
@@ -297,6 +290,7 @@ void PEAlgo::DecompressOverFlowMap()
 
 void PEAlgo::IdentifyExpandedLocations()
 {
+	sizeOfLSBs = _imagePixels.rows * _imagePixels.cols;
 	// Mark E locations
 	for (int i = 0; i < _imagePixels.rows*_imagePixels.cols; i++)
 		if ((*OverFlowMapM)[i])
@@ -310,4 +304,24 @@ void PEAlgo::IdentifyExpandedLocations()
 				Locations.at(i) = EXPANDABLE_IN_DELTA;
 				sizeOfLSBs--;
 			}
+}
+
+void PEAlgo::RecoverOriginalValues()
+{
+	for (int i = 0; i < _imagePixels.rows; i++)
+		for (int j = 0; j < _imagePixels.cols; j++)
+		{
+			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
+			uchar predictedValue = 0;
+			short predictedError = 0;
+			if (c1 <= std::min(c2, c3))
+				predictedValue = 2 * floor((float)std::max(c2, c3) / 2);
+			else if (c1 >= std::max(c1, c3))
+				predictedValue = 2 * floor((float)std::min(c2, c3) / 2);
+			else
+				predictedValue = 2 * floor((float)(c2 + c3 - c1) / 2);
+			predictedError= (short)_imagePixels.at<uchar>(i, j) - (short)predictedValue;
+			//RecoverPixel
+			_imagePixels.at<uchar>(i, j) = predictedValue + (uchar)(floor((float)predictedError / 2));
+		}
 }

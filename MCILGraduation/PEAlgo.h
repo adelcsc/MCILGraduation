@@ -25,7 +25,7 @@ public:
 	void ExtractBitStream();
 	void DecompressOverFlowMap();
 	void IdentifyExpandedLocations();
-
+	void RecoverOriginalValues();
 	//Compare
 	bool CompareLocations(std::vector<uchar> inLocations);
 	static bool isInRpRange(short prErr, uchar prVal);

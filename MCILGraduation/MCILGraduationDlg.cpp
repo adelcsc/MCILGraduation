@@ -167,7 +167,6 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
 	PEAlgo encode("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png");
-	encode.showOriginal();
 	encode.CalcPE();
 	encode.GetLocations();
 	encode.CompressOverFlowMap();
@@ -176,14 +175,14 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	encode.BuildBitStream();
 	encode.EmbedBitStream();
 	encode.CompileImage();
-	encode.showInjected();
 	PEAlgo decode(encode.getPixels().clone());
-	decode.CalcPE();
-	decode.GetCLocations();
-	decode.ExtractBitStream();
+	//decode.GetCLocations(); All Locations of the Image are changable
+	decode.ExtractBitStream(); // Extract BitStream from LSBs of Pixel intensities
 	decode.DecompressOverFlowMap();
+	decode.RecoverOriginalValues();
+	decode.showInjected();
+	decode.CalcPE();
 	decode.IdentifyExpandedLocations();
-	//Locations here aren't the same !
 	decode.CompareLocations(encode.Locations);
  	decode.CompareBitStreams(encode.GetBitStream());
 	
