@@ -180,7 +180,6 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	decode.ExtractBitStream(); // Extract BitStream from LSBs of Pixel intensities
 	decode.DecompressOverFlowMap();
 	decode.RecoverOriginalValues();
-	decode.showInjected();
 	decode.CalcPE();
 	decode.IdentifyExpandedLocations();
 	decode.CompareLocations(encode.Locations);

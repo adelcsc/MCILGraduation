@@ -308,20 +308,53 @@ void PEAlgo::IdentifyExpandedLocations()
 
 void PEAlgo::RecoverOriginalValues()
 {
+	BitArray LSBs = BitArray((char*)BS.LSBs, _imagePixels.rows * _imagePixels.cols);
+	LSBs.resetNext();
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for (int j = 0; j < _imagePixels.cols; j++)
 		{
+			// Calculating the predicted value/error
 			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
 			uchar predictedValue = 0;
 			short predictedError = 0;
 			if (c1 <= std::min(c2, c3))
-				predictedValue = 2 * floor((float)std::max(c2, c3) / 2);
+				predictedValue = std::max(c2, c3);
 			else if (c1 >= std::max(c1, c3))
-				predictedValue = 2 * floor((float)std::min(c2, c3) / 2);
+				predictedValue = std::min(c2, c3);
 			else
-				predictedValue = 2 * floor((float)(c2 + c3 - c1) / 2);
+				predictedValue = (c2 + c3 - c1);
+			predictedValue = 2 * floor((float)predictedValue / 2);
+
 			predictedError= (short)_imagePixels.at<uchar>(i, j) - (short)predictedValue;
+
+			//Marking the Pixel if is EXPANDABLE or CHANGABLE or EXPANDABLE_IN_DELTA
+			if ((*OverFlowMapM)[i*_imagePixels.rows+j])
+				if (predictedError >= -2 * (short)BS.aInfo.header.Delta - 2 && predictedError <= 2 * BS.aInfo.header.Delta + 1)
+					Locations.at(i * _imagePixels.rows + j) = EXPANDABLE_IN_DELTA;
+				else
+					Locations.at(i * _imagePixels.rows + j) = EXPANDABLE;
+			else if (isChangable(predictedError, predictedValue, &isInRpRange))
+				Locations.at(i * _imagePixels.rows + j) = CHANGABLE;
+			else
+				Locations.at(i * _imagePixels.rows + j) = NEITHER;
+
+			// Based on the location map we recover the original bit of the predictedError
+			switch (Locations.at(i * _imagePixels.rows + j))
+			{
+			case CHANGABLE:
+				ChangeBit(predictedError, LSBs.next());
+				break;
+			case EXPANDABLE:
+				ChangeBit(predictedError, LSBs.next());
+				break;
+			case EXPANDABLE_IN_DELTA:
+				predictedError = floor((float)predictedError / 2);
+				break;
+			default:
+				continue;
+			}
+
 			//RecoverPixel
-			_imagePixels.at<uchar>(i, j) = predictedValue + (uchar)(floor((float)predictedError / 2));
+			_imagePixels.at<uchar>(i, j) = predictedValue + (uchar)predictedError;
 		}
 }
