@@ -36,6 +36,7 @@ bool PEAlgo::isInRpRange(short prErr, uchar prVal)
 	return false;
 }
 
+
 PEAlgo::PEAlgo(String fileName) : EEAlgo(fileName)
 {
 	Init(_imagePixels);
@@ -48,14 +49,17 @@ PEAlgo::PEAlgo(Mat pixels) : EEAlgo(pixels)
 
 void PEAlgo::CalcPE()
 {
+	int a = 0;
 	// Calculating Predited Values
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for (int j = 0; j < _imagePixels.cols; j++)
 		{
+			if (i == 197 && j == 385)
+				a=0;
 			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
 			if (c1 <= std::min(c2, c3))
 				PredictedVal.at<uchar>(i, j) = 2*floor((float)std::max(c2, c3)/2);
-			else if (c1 >= std::max(c1, c3))
+			else if (c1 >= std::max(c2, c3))
 				PredictedVal.at<uchar>(i, j) = 2 * floor((float)std::min(c2, c3)/2);
 			else
 				PredictedVal.at<uchar>(i, j) = 2 * floor((float)(c2 + c3 - c1)/2);
@@ -106,10 +110,12 @@ void PEAlgo::GetDelta()
 					if (Locations.at(i* _imagePixels.rows+j) != EXPANDABLE)
 						continue;
 					Locations.at(i * _imagePixels.rows + j) = EXPANDABLE_IN_DELTA;
-					sizeOfLSBs--;
 					bits++;
+					if (bits <= 72 + BS.aInfo.header.SizeOfPayload + BS.aInfo.header.SizeOfCompressedOverFlowMap)
+						sizeOfLSBs--;
+					else
+						continue;
 				}
-		//TODO: Payload Size+Compressed Size
 		if (bits >= 72 + BS.aInfo.header.SizeOfPayload + BS.aInfo.header.SizeOfCompressedOverFlowMap)
 			break;
 	}
@@ -154,11 +160,8 @@ void PEAlgo::BuildBitStream()
 	//Save LSBs of C \ Ee
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for(int j =0;j<_imagePixels.cols;j++)
-			{
-				if (!(Locations.at(i* _imagePixels.rows+j) == CHANGABLE || Locations.at(i * _imagePixels.rows + j) == EXPANDABLE))
-					continue;
-				LSBs->push((uchar)PredictedErrors.at<short>(i,j));
-			}
+				if (Locations.at(i* _imagePixels.rows+j) == CHANGABLE || Locations.at(i * _imagePixels.rows + j) == EXPANDABLE)
+					LSBs->push(PredictedErrors.at<short>(i,j));
 
 	BS.LSBs = LSBs->Data();
 }
@@ -266,12 +269,9 @@ void PEAlgo::ExtractBitStream()
 	BS.payload = payload->bitArray;
 	for (; i < _imagePixels.cols * _imagePixels.rows; i++)
 	{
-		if (Locations.at(i) == CHANGABLE)
-			{
-				if (payload->currIndex >= BS.aInfo.header.SizeOfPayload)
-					goto ExtractLSBs;
-				payload->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
-			}
+			if (payload->currIndex >= BS.aInfo.header.SizeOfPayload)
+				goto ExtractLSBs;
+			payload->push(_imagePixels.at<uchar>(i / _imagePixels.cols, i % _imagePixels.cols));
 	}
 	//Extract LSBs
 	ExtractLSBs:
@@ -317,9 +317,9 @@ void PEAlgo::RecoverOriginalValues()
 			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
 			uchar predictedValue = 0;
 			short predictedError = 0;
-			if (c1 <= std::min(c2, c3))
+			if (c1 <= std::min(c2, c3))// a = c3 b = c2 c = c1
 				predictedValue = std::max(c2, c3);
-			else if (c1 >= std::max(c1, c3))
+			else if (c1 >= std::max(c2, c3))
 				predictedValue = std::min(c2, c3);
 			else
 				predictedValue = (c2 + c3 - c1);
@@ -327,8 +327,7 @@ void PEAlgo::RecoverOriginalValues()
 
 			predictedError= (short)_imagePixels.at<uchar>(i, j) - (short)predictedValue;
 
-			//Marking the Pixel if is EXPANDABLE or CHANGABLE or EXPANDABLE_IN_DELTA
-			if ((*OverFlowMapM)[i*_imagePixels.rows+j])
+			if ((*OverFlowMapM)[i * _imagePixels.rows + j])
 				if (predictedError >= -2 * (short)BS.aInfo.header.Delta - 2 && predictedError <= 2 * BS.aInfo.header.Delta + 1)
 					Locations.at(i * _imagePixels.rows + j) = EXPANDABLE_IN_DELTA;
 				else
@@ -337,17 +336,23 @@ void PEAlgo::RecoverOriginalValues()
 				Locations.at(i * _imagePixels.rows + j) = CHANGABLE;
 			else
 				Locations.at(i * _imagePixels.rows + j) = NEITHER;
-
+			//
 			// Based on the location map we recover the original bit of the predictedError
 			switch (Locations.at(i * _imagePixels.rows + j))
 			{
-			case CHANGABLE:
-				ChangeBit(predictedError, LSBs.next());
+			case CHANGABLE: //C /E 
+				predictedError =ChangeBit(predictedError, LSBs.next());
 				break;
-			case EXPANDABLE:
-				ChangeBit(predictedError, LSBs.next());
+			case EXPANDABLE:// Es
+				//TODO: SHIFT 
+				predictedError =ChangeBit(predictedError, LSBs.next());
+				if (predictedError < -2 * (short)BS.aInfo.header.Delta - 2)
+					predictedError += BS.aInfo.header.Delta + 1;
+				else if (predictedError > 2 * BS.aInfo.header.Delta + 1)
+					predictedError -= BS.aInfo.header.Delta + 1;
+				
 				break;
-			case EXPANDABLE_IN_DELTA:
+			case EXPANDABLE_IN_DELTA: // Ee
 				predictedError = floor((float)predictedError / 2);
 				break;
 			default:

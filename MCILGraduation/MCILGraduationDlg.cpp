@@ -176,14 +176,12 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	encode.EmbedBitStream();
 	encode.CompileImage();
 	PEAlgo decode(encode.getPixels().clone());
-	//decode.GetCLocations(); All Locations of the Image are changable
 	decode.ExtractBitStream(); // Extract BitStream from LSBs of Pixel intensities
 	decode.DecompressOverFlowMap();
 	decode.RecoverOriginalValues();
-	decode.CalcPE();
-	decode.IdentifyExpandedLocations();
+	decode.showRestored();
 	decode.CompareLocations(encode.Locations);
- 	decode.CompareBitStreams(encode.GetBitStream());
+ 	decode.CompareBitStreams(encode.GetBitStream());//True
 	
 }
 

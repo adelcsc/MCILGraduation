@@ -40,6 +40,7 @@ bool EEAlgo::CompareBitStreams(BitStream inBS)
 	if (!(aPayload == bPayload))
 		return false;
 
+	sizeOfLSBs = _imagePixels.rows * _imagePixels.cols - 72 - BS.aInfo.header.SizeOfCompressedOverFlowMap - BS.aInfo.header.SizeOfPayload;
 	//Compare LSBs
 	BitArray aLSBs((char*)inBS.LSBs, sizeOfLSBs), bLSBs((char*)BS.LSBs, sizeOfLSBs);
 	if (!(aLSBs == bLSBs))
@@ -47,6 +48,7 @@ bool EEAlgo::CompareBitStreams(BitStream inBS)
 
 	return true;
 }
+
 
 bool EEAlgo::isEqualTo(Mat imagePixels)
 {
