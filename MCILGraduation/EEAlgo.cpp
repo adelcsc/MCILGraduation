@@ -12,6 +12,21 @@ BitArray* EEAlgo::GeneratePayload()
 	return payload;
 }
 
+uchar EEAlgo::getCurrentRegion(unsigned int bitsEmbedded)
+{
+
+	if (bitsEmbedded >= sizeof(int)*8+8 && bitsEmbedded < 72)
+		return RANGE_HEADER_EMPTY_BYTES;
+	if (bitsEmbedded >= 72 && bitsEmbedded < 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap)
+		return RANGE_COMPRESSED_OV_MAP;
+	if (bitsEmbedded >= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap &&
+		bitsEmbedded < 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
+		return RANGE_PAYLOAD;
+	if (bitsEmbedded >= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload)
+		return RANGE_LSBS;
+	return RANGE_HEADER;
+}
+
 EEAlgo::EEAlgo(const cv::String& filename, int flags)
 {
 	_imagePixels = imread(filename, IMREAD_GRAYSCALE);
@@ -40,6 +55,7 @@ bool EEAlgo::CompareBitStreams(BitStream inBS)
 	if (!(aPayload == bPayload))
 		return false;
 
+	sizeOfLSBs = _imagePixels.rows * _imagePixels.cols - 72 - BS.aInfo.header.SizeOfCompressedOverFlowMap - BS.aInfo.header.SizeOfPayload;
 	//Compare LSBs
 	BitArray aLSBs((char*)inBS.LSBs, sizeOfLSBs), bLSBs((char*)BS.LSBs, sizeOfLSBs);
 	if (!(aLSBs == bLSBs))
@@ -47,6 +63,7 @@ bool EEAlgo::CompareBitStreams(BitStream inBS)
 
 	return true;
 }
+
 
 bool EEAlgo::isEqualTo(Mat imagePixels)
 {

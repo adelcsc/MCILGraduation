@@ -3,8 +3,8 @@
 
 BitArray::BitArray(int numArray)
 {
-    bitArray = (char*)malloc(numArray % 8 != 0 ? numArray / 8 + 1 : numArray / 8);
     Size = numArray;
+    bitArray = (char*)malloc(sizeInBytes());
 }
 
 BitArray::BitArray(char* input, unsigned int size)

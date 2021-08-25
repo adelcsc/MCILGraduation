@@ -33,7 +33,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ThodiAlgo.h">
+    <ClInclude Include="DEAlgo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BitArray.h">
@@ -56,7 +56,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ThodiAlgo.cpp">
+    <ClCompile Include="DEAlgo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BitArray.cpp">

@@ -192,7 +192,7 @@
     <ClInclude Include="PEAlgo.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="ThodiAlgo.h" />
+    <ClInclude Include="DEAlgo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitArray.cpp" />
@@ -206,7 +206,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PEAlgo.cpp" />
-    <ClCompile Include="ThodiAlgo.cpp" />
+    <ClCompile Include="DEAlgo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MCILGraduation.rc" />

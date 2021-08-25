@@ -2,7 +2,6 @@
 class BitArray
 {
 public:
-	
 	unsigned int Size;
 	unsigned int currIndex=0;
 	unsigned int nextIndex=0;

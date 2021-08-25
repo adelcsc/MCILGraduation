@@ -30,4 +30,3 @@ public:
 	bool CompareLocations(std::vector<uchar> inLocations);
 	static bool isInRpRange(short prErr, uchar prVal);
 };
-
