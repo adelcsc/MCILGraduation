@@ -52,6 +52,8 @@ void PEAlgo::CalcPE()
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for (int j = 0; j < _imagePixels.cols; j++)
 		{
+			if (i == 197 && j == 385)
+				a=0;
 			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
 			if (c1 <= std::min(c2, c3))
 				PredictedVal.at<uchar>(i, j) = 2*floor((float)std::max(c2, c3)/2);
