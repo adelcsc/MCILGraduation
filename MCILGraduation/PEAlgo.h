@@ -10,8 +10,8 @@ private :
 	uchar PixelVal(int row, int col);
 	
 public:
-	PEAlgo(String fileName);
-	PEAlgo(Mat pixels);
+	PEAlgo(String fileName,float bbp);
+	PEAlgo(Mat pixels, float bbp);
 	void CalcPE();
 	std::vector<unsigned char> Locations = std::vector<unsigned char>(_imagePixels.rows * _imagePixels.cols);
 	void GetLocations();

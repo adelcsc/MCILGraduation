@@ -166,8 +166,7 @@ CString* fileName;
 void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
-	PEAlgo encode("C:\\Users\\po4A\\Desktop\\TRASH\\test.jpg");
-	encode.showOriginal();
+	PEAlgo encode("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png",1);
 	encode.CalcPE();
 	encode.GetLocations();
 	encode.CompressOverFlowMap();
@@ -176,11 +175,12 @@ void CMCILGraduationDlg::OnBnClickedButton1()
 	encode.BuildBitStream();
 	encode.EmbedBitStream();
 	encode.CompileImage();
-	PEAlgo decode(encode.getPixels().clone());
+	encode.getBppRate();
+	encode.getPSNR();
+	PEAlgo decode(encode.getPixels().clone(),0);
 	decode.ExtractBitStream(); // Extract BitStream from LSBs of Pixel intensities
 	decode.DecompressOverFlowMap();
 	decode.RecoverOriginalValues();
-	decode.showRestored();
 	decode.CompareLocations(encode.Locations);
  	decode.CompareBitStreams(encode.GetBitStream());//True
 	decode.isEqualTo(encode.getOriginalPixels());

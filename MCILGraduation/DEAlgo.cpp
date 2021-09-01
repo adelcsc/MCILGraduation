@@ -2,12 +2,12 @@
 #include "DEAlgo.h"
 #include <algorithm>
 
-DEAlgo::DEAlgo(const cv::String& filename, int flags) : EEAlgo(filename)
+DEAlgo::DEAlgo(const cv::String& filename, int flags,float bpp) : EEAlgo(filename,0,bpp)
 {
 	Init(_imagePixels);
 }
 
-DEAlgo::DEAlgo(Mat pixels) : EEAlgo(pixels)
+DEAlgo::DEAlgo(Mat pixels,float bpp) : EEAlgo(pixels,bpp)
 {
 	Init(pixels);
 }
@@ -22,7 +22,7 @@ void DEAlgo::Init(Mat _imagePixels)
 		OverFlowMapM = new BitArray(imageSize); //Allocating a buff that's sufficient to hold all bits
 		High = std::vector<short>(imageSize, 0);
 		Low = std::vector<uchar>(imageSize, 0);
-		Payload = GeneratePayload();
+		//TODO: Generate Payload
 		Locations = std::vector<uchar>(imageSize, 0);//Same here
 		MessageBoxA(NULL, (LPCSTR)"Image Loaded Successfully !", (LPCSTR)"Success !", MB_OK);
 	}

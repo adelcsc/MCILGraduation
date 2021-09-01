@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "EEAlgo.h"
-BitArray* EEAlgo::GeneratePayload()
+BitArray* EEAlgo::GeneratePayload(unsigned int sizeInBits)
 {
 	std::srand(std::time(nullptr));
-	BitArray* payload = new BitArray(((float)std::rand() / RAND_MAX) * 10000);
+	BitArray* payload = new BitArray(sizeInBits);
 	for (int i = 0; i < payload->size(); i++)
 		if ((float)std::rand() / RAND_MAX < 0.5)
 			payload->set(i);
@@ -27,14 +27,16 @@ uchar EEAlgo::getCurrentRegion(unsigned int bitsEmbedded)
 	return RANGE_HEADER;
 }
 
-EEAlgo::EEAlgo(const cv::String& filename, int flags)
+EEAlgo::EEAlgo(const cv::String& filename, int flags,float bpp)
 {
+	_bbp = bpp;
 	_imagePixels = imread(filename, IMREAD_GRAYSCALE);
 	_OriginalPixels = _imagePixels.clone();
 }
 
-EEAlgo::EEAlgo(Mat pixels)
+EEAlgo::EEAlgo(Mat pixels,float bpp)
 {
+	_bbp = bpp;
 	_imagePixels = pixels;
 	_OriginalPixels = _imagePixels.clone();
 }
@@ -71,4 +73,14 @@ bool EEAlgo::isEqualTo(Mat imagePixels)
 		if (_imagePixels.data[i] != imagePixels.data[i])
 			return false;
 	return true;
+}
+
+float EEAlgo::getBppRate()
+{
+	return (embeddingSize * _bbp)/(_imagePixels.rows*_imagePixels.cols);
+}
+
+unsigned int EEAlgo::getPSNR()
+{
+	return cv::mean(_OriginalPixels - _imagePixels)[0];
 }

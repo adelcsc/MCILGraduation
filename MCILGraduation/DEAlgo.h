@@ -12,8 +12,8 @@ private:
 	static bool isInRdRange(short val, uchar low);
 public:
 	std::vector<short> High;
-	DEAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE);
-	DEAlgo(Mat pixels);
+	DEAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE,float bpp=0);
+	DEAlgo(Mat pixels,float bpp=0);
 	void Init(Mat pixels);
 	void CalcHighPass();
 	void DetermineLocations();
