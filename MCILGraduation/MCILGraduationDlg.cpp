@@ -8,6 +8,7 @@
 #include "MCILGraduationDlg.h"
 #include "afxdialogex.h"
 #include "PEAlgo.h"
+#include "DEAlgo.h"
 #include "BitArray.h"
 #include <commdlg.h>
 #ifdef _DEBUG
@@ -166,23 +167,29 @@ CString* fileName;
 void CMCILGraduationDlg::OnBnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
-	PEAlgo encode("C:\\Users\\po4A\\Desktop\\TRASH\\test.jpg");
-	encode.showOriginal();
-	encode.CalcPE();
-	encode.GetLocations();
+	DEAlgo encode("C:\\Users\\po4A\\Desktop\\IMPORTANT\\Graduation\\lena.png", 0.5);
+	encode.CalcHighPass();
+	encode.DetermineLocations();
 	encode.CompressOverFlowMap();
 	encode.GetDelta();
 	encode.OutterHistogramShift();
 	encode.BuildBitStream();
 	encode.EmbedBitStream();
 	encode.CompileImage();
-	PEAlgo decode(encode.getPixels().clone());
-	decode.ExtractBitStream(); // Extract BitStream from LSBs of Pixel intensities
+	encode.getBppRate();
+	encode.getPSNR();
+	DEAlgo decode(encode.getPixels().clone());
+	decode.showOriginal();
+	decode.CalcHighPass();
+	decode.GetCLocations();
+	decode.ExtractBitStream();
 	decode.DecompressOverFlowMap();
-	decode.RecoverOriginalValues();
-	decode.showRestored();
-	decode.CompareLocations(encode.Locations);
- 	decode.CompareBitStreams(encode.GetBitStream());//True
+	decode.IdentifyExpandedLocations();
+	decode.CompareBitStreams(encode.GetBitStream());
+	decode.RestoreLSBs();
+	decode.RestoreExpanded();
+	decode.ReverseShift();
+	decode.CompileImage();
 	decode.isEqualTo(encode.getOriginalPixels());
 }
 

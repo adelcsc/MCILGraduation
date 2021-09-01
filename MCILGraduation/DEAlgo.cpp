@@ -2,12 +2,12 @@
 #include "DEAlgo.h"
 #include <algorithm>
 
-DEAlgo::DEAlgo(const cv::String& filename, int flags) : EEAlgo(filename)
+DEAlgo::DEAlgo(const cv::String& filename,float bpp) : EEAlgo(filename,0,bpp)
 {
 	Init(_imagePixels);
 }
 
-DEAlgo::DEAlgo(Mat pixels) : EEAlgo(pixels)
+DEAlgo::DEAlgo(Mat pixels,float bpp) : EEAlgo(pixels,bpp)
 {
 	Init(pixels);
 }
@@ -22,7 +22,7 @@ void DEAlgo::Init(Mat _imagePixels)
 		OverFlowMapM = new BitArray(imageSize); //Allocating a buff that's sufficient to hold all bits
 		High = std::vector<short>(imageSize, 0);
 		Low = std::vector<uchar>(imageSize, 0);
-		Payload = GeneratePayload();
+		//TODO: Generate Payload
 		Locations = std::vector<uchar>(imageSize, 0);//Same here
 		MessageBoxA(NULL, (LPCSTR)"Image Loaded Successfully !", (LPCSTR)"Success !", MB_OK);
 	}
@@ -50,6 +50,7 @@ void DEAlgo::DetermineLocations()
 			Locations.at(i) = EXPANDABLE;
 			OverFlowMapM->set(i);
 			sizeOfLSBs++;
+			embeddingSize++;
 			continue;
 		}
 		else if (isChangable(High.at(i), Low.at(i), &isInRdRange))
@@ -66,6 +67,9 @@ void DEAlgo::DetermineLocations()
 void DEAlgo::GetDelta()
 {
 	unsigned int bits=0;
+	embeddingSize -= BS.aInfo.header.SizeOfCompressedOverFlowMap + 72;
+	Payload = GeneratePayload(embeddingSize * _bbp);
+	BS.aInfo.header.SizeOfPayload = Payload->size();
 	for (delta = 0; delta < 256; delta++)
 	{
 		for (int i = 0; i < High.size(); i++)
@@ -99,16 +103,10 @@ void DEAlgo::BuildBitStream()
 	BS.aInfo.header.Delta = delta;
 	//TODO: Size Of coMPRESSED OVERFLOW MAP
 	BS.aInfo.header.SizeOfCompressedOverFlowMap = ComMap->size();
-	//TODO: Size of Payload
 	BS.aInfo.header.SizeOfPayload = Payload->size();
 	BS.aInfo.overflowComp = ComMap->Data();
 	BS.payload = Payload->Data();
 	LSBs = new BitArray(sizeOfLSBs);
-	if (BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload + sizeOfLSBs + 72 > High.size())
-	{
-		MessageBoxA(NULL, (LPCSTR)"Size of Information is too large !", (LPCSTR)"Error", MB_OK);
-		exit(0);
-	}
 	//Save LSBs of C \ Ee
 	for (int i = 0; i < Locations.size(); i++)
 	{
@@ -169,6 +167,7 @@ void DEAlgo::CompressOverFlowMap()
 	std::string* output = new std::string;
 	snappy::Compress((char*)OverFlowMapM->Data(), OverFlowMapM->sizeInBytes(), output);
 	ComMap = new BitArray((char*)output->data(),output->size()*8);
+	BS.aInfo.header.SizeOfCompressedOverFlowMap = ComMap->size();
 }
 
 void DEAlgo::CompileImage()

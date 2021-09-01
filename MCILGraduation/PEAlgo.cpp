@@ -8,7 +8,7 @@ void PEAlgo::Init(Mat pixels)
 	else
 	{
 		OverFlowMapM = new BitArray(_imagePixels.rows*_imagePixels.cols); //Allocating a buff that's sufficient to hold all bits
-		Payload = GeneratePayload();
+		//TODO:Generate Payload PE
 		MessageBoxA(NULL, (LPCSTR)"Image Loaded Successfully !", (LPCSTR)"Success !", MB_OK);
 	}
 }
@@ -37,12 +37,12 @@ bool PEAlgo::isInRpRange(short prErr, uchar prVal)
 }
 
 
-PEAlgo::PEAlgo(String fileName) : EEAlgo(fileName)
+PEAlgo::PEAlgo(String fileName,float bpp) : EEAlgo(fileName,0,bpp)
 {
 	Init(_imagePixels);
 }
 
-PEAlgo::PEAlgo(Mat pixels) : EEAlgo(pixels)
+PEAlgo::PEAlgo(Mat pixels,float bpp) : EEAlgo(pixels,bpp)
 {
 	Init(pixels);
 }
@@ -52,8 +52,6 @@ void PEAlgo::CalcPE()
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for (int j = 0; j < _imagePixels.cols; j++)
 		{
-			if (i == 197 && j == 385)
-				a=0;
 			uchar c1 = PixelVal(i - 1, j - 1), c2 = PixelVal(i - 1, j), c3 = PixelVal(i, j - 1);
 			if (c1 <= std::min(c2, c3))
 				PredictedVal.at<uchar>(i, j) = 2*floor((float)std::max(c2, c3)/2);
@@ -79,6 +77,7 @@ void PEAlgo::GetLocations()
 				Locations.at(i * _imagePixels.rows + j) = EXPANDABLE;
 				OverFlowMapM->set(i * _imagePixels.rows + j);
 				sizeOfLSBs++;
+				embeddingSize++;
 				continue;
 			}
 			else if (isChangable(PredictedErrors.at<short>(i, j), PredictedVal.at<uchar>(i, j), &isInRpRange))
@@ -90,13 +89,15 @@ void PEAlgo::GetLocations()
 				Locations.at(i * _imagePixels.rows + j) = NEITHER;
 			OverFlowMapM->reset(i * _imagePixels.rows + j);
 		}
-
 }
 
 void PEAlgo::GetDelta()
 {
 	unsigned int bits=0;
-	for (delta = 0; delta < 256; delta++)
+	embeddingSize -= 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap;
+	BS.aInfo.header.SizeOfPayload = embeddingSize*_bbp;
+	Payload = GeneratePayload(BS.aInfo.header.SizeOfPayload);
+	for(delta = 0; delta < 256; delta++)
 	{
 		for (int i = 0; i < _imagePixels.rows; i++)
 			for(int j = 0;j< _imagePixels.cols;j++)
@@ -120,7 +121,6 @@ void PEAlgo::CompressOverFlowMap()
 	snappy::Compress((char*)OverFlowMapM->Data(), OverFlowMapM->sizeInBytes(), output);
 	ComMap = new BitArray((char*)output->data(), output->size() * 8);
 	BS.aInfo.header.SizeOfCompressedOverFlowMap = ComMap->size();
-	BS.aInfo.header.SizeOfPayload = Payload->size();
 }
 
 void PEAlgo::OutterHistogramShift()
