@@ -5,6 +5,7 @@
 #include <opencv2/core/cvstd.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <fstream>
 #include <snappy.h>
 using namespace cv;
 class EEAlgo
@@ -56,6 +57,11 @@ public:
 	bool isEqualTo(Mat imagePixels);
 	float getBppRate();
 	float getPSNR();
+	static void toCsv(std::vector<float> one, std::vector<float> second,std::string fileName);
+	static void toCsv(float, std::string fileName);
+	float getMaxBpp();
+	float getDeltaValue() { return (float)delta; }
+	float getMaxCapacity();
 	bool CompareBitStreams(BitStream inBS);
 	EEAlgo(const cv::String& filename, int flags = cv::IMREAD_GRAYSCALE,float bpp=0);
 	EEAlgo(Mat pixels,float bpp);

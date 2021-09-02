@@ -9,7 +9,6 @@ void PEAlgo::Init(Mat pixels)
 	{
 		OverFlowMapM = new BitArray(_imagePixels.rows*_imagePixels.cols); //Allocating a buff that's sufficient to hold all bits
 		//TODO:Generate Payload PE
-		MessageBoxA(NULL, (LPCSTR)"Image Loaded Successfully !", (LPCSTR)"Success !", MB_OK);
 	}
 }
 
@@ -160,6 +159,8 @@ void PEAlgo::EmbedBitStream()
 	for (int i = 0; i < _imagePixels.rows; i++)
 		for (int j = 0; j < _imagePixels.cols; j++)
 		{
+			if (bitsEmbedded > 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload + sizeOfLSBs)
+				goto exit_now;
 			location = Locations.at(i * _imagePixels.rows + j);
 			switch (getCurrentRegion(bitsEmbedded))
 			{
@@ -195,6 +196,8 @@ void PEAlgo::EmbedBitStream()
 				break;
 			}
 		}
+exit_now:
+	int a=0;
 }
 
 void PEAlgo::CompileImage()

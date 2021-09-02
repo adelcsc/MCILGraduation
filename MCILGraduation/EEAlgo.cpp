@@ -81,5 +81,38 @@ float EEAlgo::getBppRate()
 
 float EEAlgo::getPSNR()
 {
-	return 10*log10((255*255)/ cv::mean(_OriginalPixels - _imagePixels)[0]);
+	Mat de = _OriginalPixels - _imagePixels;
+	Mat res;
+	cv::pow(de, 2, res);
+	return 10*log10(((long int)255*(long int)255)/ cv::mean(res)[0]);
 }
+
+void EEAlgo::toCsv(std::vector<float> one, std::vector<float> second, std::string fileName)
+{
+	std::ofstream out;
+	out.open(std::string("C:/data/")+fileName);
+	for (int i = 0; i < one.size(); i++)
+		out << one.at(i) << "," << second.at(i)<<"\n";
+	out.close();
+}
+
+void EEAlgo::toCsv(float e, std::string fileName)
+{
+	std::ofstream out;
+	out.open(std::string("C:/data/") + fileName);
+	out << e;
+	out.close();
+}
+
+float EEAlgo::getMaxBpp()
+{
+	if (_bbp == 1)
+		return getBppRate();
+	return 0;
+}
+
+float EEAlgo::getMaxCapacity()
+{
+	return _bbp==1?embeddingSize:0;
+}
+

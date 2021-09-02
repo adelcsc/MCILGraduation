@@ -24,7 +24,6 @@ void DEAlgo::Init(Mat _imagePixels)
 		Low = std::vector<uchar>(imageSize, 0);
 		//TODO: Generate Payload
 		Locations = std::vector<uchar>(imageSize, 0);//Same here
-		MessageBoxA(NULL, (LPCSTR)"Image Loaded Successfully !", (LPCSTR)"Success !", MB_OK);
 	}
 }
 
@@ -126,6 +125,8 @@ void DEAlgo::EmbedBitStream()
 	for (int i = 0; i < Locations.size(); i++)
 	{
 		location = Locations.at(i);
+		if (bitsEmbedded > 72 + BS.aInfo.header.SizeOfCompressedOverFlowMap + BS.aInfo.header.SizeOfPayload + sizeOfLSBs)
+			break;
 		switch (getCurrentRegion(bitsEmbedded))
 		{
 		case RANGE_HEADER:
